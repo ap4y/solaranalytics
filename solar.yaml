@@ -1,0 +1,52 @@
+rest:
+  - resource: "http://nas:38080/live"
+    availability: "{{ value_json.availability }}"
+    sensor:
+      - name: "Live power consumption"
+        value_template: "{{ value_json.consumed }}"
+        unit_of_measurement: W
+        state_class: measurement
+        device_class: power
+      - name: "Live solar production"
+        value_template: "{{ value_json.generated }}"
+        unit_of_measurement: W
+        state_class: measurement
+        device_class: power
+  - resource: "http://nas:38080/site"
+    availability: "{{ value_json.availability }}"
+    sensor:
+      - name: "Grid consumption"
+        value_template: "{{ value_json.imported }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy
+      - name: "Solar production"
+        value_template: "{{ value_json.generated }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy
+      - name: "Return to grid"
+        value_template: "{{ value_json.exported }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy
+      - name: "Hot Water power consumption"
+        value_template: "{{ value_json.hot_water }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy
+      - name: "Stove power consumption"
+        value_template: "{{ value_json.stove }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy
+      - name: "AC lounge power consumption"
+        value_template: "{{ value_json.ac1 }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy
+      - name: "AC hall power consumption"
+        value_template: "{{ value_json.ac2 }}"
+        unit_of_measurement: Wh
+        state_class: total_increasing
+        device_class: energy

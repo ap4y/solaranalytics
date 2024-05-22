@@ -9,9 +9,9 @@ import "log"
 
 var baseUrl = "https://portal.solaranalytics.com.au/api"
 
-var username = os.Getenv("USER")
-var password = os.Getenv("PASSWORD")
-var siteId = os.Getenv("SITE_ID")
+var username = os.Getenv("SA_USERNAME")
+var password = os.Getenv("SA_PASSWORD")
+var siteId = os.Getenv("SA_SITE_ID")
 
 type Token struct {
 	Expires  string `json:"expires"`
@@ -107,10 +107,11 @@ func updateSensors(url string, sensors interface{}) error {
 
 func updateSiteData() error {
 	d := time.Now().Format("20060102")
-	err := updateSensors(
-		fmt.Sprintf("%s/v2/site_data/%s?tstart=%s&tend=%s&all=true&gran=minute&trunc=false", baseUrl, siteId, d, d),
-		&siteData,
+	url := fmt.Sprintf(
+		"%s/v2/site_data/%s?tstart=%s&tend=%s&all=true&gran=minute&trunc=false",
+		baseUrl, siteId, d, d,
 	)
+	err := updateSensors(url, &siteData)
 	siteData.Available = err == nil
 
 	return err
@@ -155,12 +156,17 @@ func main() {
 	}()
 
 	http.HandleFunc("/live", func(w http.ResponseWriter, r *http.Request) {
-		data := liveData.Data[len(liveData.Data)-1]
-		json.NewEncoder(w).Encode(struct {
+		data := struct {
 			Available bool    `json:"available"`
 			Generated float32 `json:"generated"`
 			Consumed  float32 `json:"consumed"`
-		}{liveData.Available, data.Generated, data.Consumed})
+		}{liveData.Available, 0, 0}
+		if len(liveData.Data) > 0 {
+			v := liveData.Data[len(liveData.Data)-1]
+			data.Generated = v.Generated
+			data.Consumed = v.Consumed
+		}
+		json.NewEncoder(w).Encode(data)
 	})
 	http.HandleFunc("/site", func(w http.ResponseWriter, r *http.Request) {
 		data := struct {

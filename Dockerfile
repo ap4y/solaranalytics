@@ -1,6 +1,6 @@
 FROM docker.io/golang:alpine AS builder
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata
 ENV GO111MODULE=on
 WORKDIR /app
 COPY . .
@@ -10,6 +10,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM scratch
 
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /solaranalytics /solaranalytics
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 

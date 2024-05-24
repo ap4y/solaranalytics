@@ -22,6 +22,7 @@ type Token struct {
 type SiteData struct {
 	Available bool `json:"available"`
 	Data      []struct {
+		Timestamp string  `json:"t_stamp"`
 		Expected  float32 `json:"energy_expected"`
 		Generated float32 `json:"energy_generated"`
 		Consumed  float32 `json:"energy_consumed"`
@@ -41,7 +42,7 @@ type LiveData struct {
 }
 
 var client = http.Client{
-	Timeout: time.Second * 2,
+	Timeout: 5 * time.Second,
 }
 
 var (
@@ -64,9 +65,9 @@ func updateToken() error {
 	}
 
 	req.SetBasicAuth(username, password)
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
+	res, err := client.Do(req)
+	if err != nil {
+		return err
 	}
 
 	defer res.Body.Close()
@@ -91,9 +92,9 @@ func updateSensors(url string, sensors interface{}) error {
 	}
 
 	req.Header.Add("Authorization", "Bearer "+token.Token)
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
+	res, err := client.Do(req)
+	if err != nil {
+		return err
 	}
 
 	defer res.Body.Close()
@@ -180,7 +181,14 @@ func main() {
 			AC2       float32 `json:"ac2"`
 			Stove     float32 `json:"stove"`
 		}{siteData.Available, 0, 0, 0, 0, 0, 0, 0, 0}
+		y, m, d := time.Now().Date()
+		startTs := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
 		for _, v := range siteData.Data {
+			ts, err := time.ParseInLocation(time.DateTime, v.Timestamp, time.Local)
+			if err != nil || ts.Before(startTs) {
+				continue
+			}
+
 			data.Generated += v.Generated
 			data.Consumed += v.Consumed
 			if v.Consumed > v.Generated {
